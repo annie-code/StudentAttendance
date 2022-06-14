@@ -25,21 +25,39 @@
 #ENTRYPOINT ["dotnet", "StudentAttendance.dll"]
 
 
+#FROM mcr.microsoft.com/dotnet/aspnet:5.0 AS base
+#
+#
+#FROM mcr.microsoft.com/dotnet/aspnet:5.0  AS build-env
+#WORKDIR /app
+## Copy csproj and restore as distinct layers
+#COPY *.csproj ./
+#RUN dotnet restore
+## Copy everything else and build
+#COPY . ./
+#RUN dotnet publish -c Release -o out
+#
+#
+## Build runtime image
+#FROM mcr.microsoft.com/dotnet/aspnet:5.0
+#WORKDIR /app
+#COPY --from=build-env /app/out .
+#ENTRYPOINT ["dotnet", "StudentAttendanceService.dll"]
+
 FROM mcr.microsoft.com/dotnet/aspnet:5.0 AS base
-
-
-FROM mcr.microsoft.com/dotnet/aspnet:5.0  AS build-env
 WORKDIR /app
-# Copy csproj and restore as distinct layers
-COPY *.csproj ./
+EXPOSE 80
+EXPOSE 443
+
+FROM mcr.microsoft.com/dotnet/sdk:5.0 AS build
+WORKDIR /src
+
+COPY StudentAttendanceService.csproj .
 RUN dotnet restore
-# Copy everything else and build
-COPY . ./
-RUN dotnet publish -c Release -o out
+COPY . .
+RUN dotnet publish -c release -o /app
 
-
-# Build runtime image
 FROM mcr.microsoft.com/dotnet/aspnet:5.0
 WORKDIR /app
-COPY --from=build-env /app/out .
+COPY --from=build /app .
 ENTRYPOINT ["dotnet", "StudentAttendanceService.dll"]
